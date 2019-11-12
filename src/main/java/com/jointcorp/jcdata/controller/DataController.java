@@ -64,7 +64,7 @@ public class DataController {
     }
 
     /**
-     *
+     * Web query ECG data
      * @param uid   User id
      * @param mac    MAC Address
      * @param time
@@ -78,6 +78,14 @@ public class DataController {
         return dataService.query(uid,mac,ldt.getYear(),ldt.getMonthValue(),ldt.getDayOfMonth(), ldt,DataType.ECG.getDataType());
     }
 
+    /**
+     * Web query GPS data
+     * @param uid   User id
+     * @param mac    MAC Address
+     * @param time
+     * @return
+     * @throws Exception
+     */
     @GetMapping("/queryGps")
     @ResponseBody
     public MessageResult queryGps(Long uid, String mac, String time) throws Exception {
