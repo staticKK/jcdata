@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jointcorp.jcdata.mapper.JcdataMapper">
+
+	<insert id="insertTotalSportData" useGeneratedKeys="true" parameterType="java.util.List">
+		insert into total_sport_data(dataDetail,time,mac,uid)  values
+		<foreach collection="list" item="item" index="index" separator="," >
+			(#{item.dataDetail},DATE_FORMAT(#{item.time},'%Y-%m-%d'),#{item.mac},#{item.uid})
+		</foreach>
+	</insert>
+
+	<insert id="insertData" useGeneratedKeys="true" parameterType="java.util.List">
+		insert into ${tableName}(dataDetail,time,mac,uid)  values
+		<foreach collection="list" item="item" index="index" separator="," >
+			(#{item.dataDetail},DATE_FORMAT(#{item.time},'%Y-%m-%d %H:%i:%s'),#{item.mac},#{item.uid})
+		</foreach>
+	</insert>
+
+	<select id="selectExistDateTotalSport" parameterType="java.util.List" resultType="java.time.LocalDate">
+		SELECT time from total_sport_data
+		WHERE uid = #{uid} and mac = #{mac}
+			and time between #{minDate} and #{maxDate}
+		and time IN
+		<foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+	</select>
+
+	<select id="selectExistDate" parameterType="java.util.List" resultType="java.time.LocalDateTime">
+		SELECT time from ${tableName}
+		WHERE uid = #{uid} and mac = #{mac}
+			and time between #{minDate} and #{maxDate}
+		and time IN
+		<foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+	</select>
+
+	<select id="selectExistFile" parameterType="java.util.List" resultType="com.jointcorp.jcdata.po.ExistFilePO">
+		SELECT id,time,file_name as fileName from gps_data
+		WHERE uid = #{uid} and mac = #{mac}
+			and time between #{minDate} and #{maxDate}
+		and time IN
+		<foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+	</select>
+
+	<update id="updateTotalSportData"  parameterType="java.util.List">
+		<foreach collection="list" item="item" index="index" open="" close="" separator=";">
+			update total_sport_data
+			<set>
+				dataDetail = '${item.dataDetail}'
+			</set>
+			where uid = ${item.uid} and mac = '${item.mac}' and time = '${item.time}'
+		</foreach>
+	</update>
+
+
+	<update id="updateData"  parameterType="java.util.List">
+		<foreach collection="list" item="item" index="index" open="" close="" separator=";">
+			update ${tableName}
+			<set>
+				dataDetail = '${item.dataDetail}'
+			</set>
+			where uid = ${item.uid} and mac = '${item.mac}' and time = '${item.time}'
+		</foreach>
+	</update>
+
+    <select id="selectTotalSprot" resultType="com.jointcorp.jcdata.po.TotalSportDataPO">
+        SELECT id,dataDetail,uid,time FROM total_sport_data WHERE uid=#{uid} AND mac=#{mac}
+        and time between #{startDate} and #{endDate}
+
+        ORDER BY time
+    </select>
+
+    <select id="selectData" resultType="com.jointcorp.jcdata.po.DataTotalPO">
+        SELECT id,dataDetail,uid,time FROM ${tableName} WHERE uid=#{uid} AND mac=#{mac}
+        and time between #{startDate} and #{endDate}
+        ORDER BY time
+    </select>
+
+	<insert id="insertFile">
+		insert ${tableName}(file_name,uid,mac,time) values(#{fileName},#{uid},#{mac},#{time})
+	</insert>
+
+	<update id="batchUpdatetFile" parameterType="java.util.List">
+		<foreach collection="list" item="item" index="index" open="" close="" separator=";">
+			update ${tableName}
+			<set>
+				file_name = '${item.fileName}'
+			</set>
+			where uid = ${item.uid} and mac = '${item.mac}' and time = '${item.time}'
+		</foreach>
+	</update>
+
+	<insert id="batchInsertFile" useGeneratedKeys="true" parameterType="java.util.List">
+		insert into ${tableName}(file_name,uid,mac,time)  values
+		<foreach collection="list" item="item" index="index" separator="," >
+			(#{item.fileName},#{item.uid},#{item.mac},DATE_FORMAT(#{item.time},'%Y-%m-%d %H:%i:%s'))
+		</foreach>
+	</insert>
+
+	<select id="selectFile" resultType="com.jointcorp.jcdata.po.DataFilePO">
+		SELECT file_name as fileName,uid,mac,time FROM ${tableName}  WHERE uid=#{uid} AND mac=#{mac} AND time = '${time}'
+	</select>
+
+
+	<select id="selecDeviceType" resultType="com.jointcorp.jcdata.po.DeviceAndMac">
+		SELECT device_type AS deviceType,mac  FROM  last_use_device WHERE created = (SELECT MAX(created) FROM  last_use_device WHERE uid = #{uid} ) AND uid = #{uid}
+	</select>
+
+	<select id="selectLastMac" resultType="java.lang.String">
+		SELECT mac FROM  total_sport_data WHERE time = (SELECT MAX(time) FROM  total_sport_data WHERE uid = #{uid} ) AND uid = #{uid}
+	</select>
+
+	<insert id="insertLastUseDevice">
+		insert into last_use_device(uid,mac,device_type,created) values(#{uid},#{mac},#{deviceType},#{created})
+	</insert>
+
+</mapper>

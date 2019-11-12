@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <link rel="Bookmark" th:href="@{/favicon.ico}" >
+    <link rel="Shortcut Icon" th:href="@{/favicon.ico}"/>
+    <link rel="stylesheet" th:href="@{/lib/layui/css/layui.css}" media="all">
+    <title>Show Data</title>
+    <style>
+        .data-box div {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="data-box">
+    <div id="map_canvas" style="width:800px; height:800px;"></div>
+    <div id="gps_info" style="width:800px; height:800px;">
+        <div id="canvas" style="width:780px; height:800px;"></div>
+    </div>
+</div>
+
+
+<script th:src="@{/lib/jquery/jquery-1.11.1.min.js}"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAzpS3dVomNGcniL2azHvziHhQCOpFhll0&language=en-ww&libraries=geometry"></script>
+<script th:src="@{/lib/echarts3.4.0/echarts.min.js}"></script>
+<script th:src="@{/lib/layui/layui.js}"></script>
+<script th:src="@{/lib/common.js}"></script>
+<script type="text/javascript">
+
+    $(function(){
+        var time = $.getUrlParam('t');
+        var uid = $.getUrlParam('uid');
+        var mac = $.getUrlParam('mac');
+        showGps(time,uid,mac);
+    });
+
+    function showGps(time,uid,mac) {
+        $.ajaxFormGet('/jcdata/data/queryGps',{uid:uid,mac:mac,time:time},function(data){
+            if(data.msgCode === 1) {
+                var data = data.data;
+                geCenter(data);
+                drawAndAllocationSpeed(data);
+            } else if(data.msgCode === 2200) {
+                alert('没有对应的数据');
+            }
+            else {
+                alert('系统错误');
+            }
+
+        });
+    }
+
+    var map = new google.maps.Map(document.getElementById("map_canvas"));
+
+    function geCenter(data) {
+        var i = data.length/2;
+        var center = new google.maps.LatLng(data[i].latitude,data[i].longitude);
+        var myOptions = {
+            zoom: 16,
+            center: center,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        map.setOptions(myOptions);
+    }
+
+
+    /*function initialize(data) {
+        var trackPoints = [];
+        var center;
+        var length = data.length;
+        $.each(data,function(i,value){
+            if(i === length/2 ) {
+                center = new google.maps.LatLng(value.latitude,value.longitude);
+            }
+            trackPoints.push(new google.maps.LatLng(value.latitude,value.longitude));
+        });
+    }*/
+
+    var speed_allocation = [];
+
+    //画图，配速，每公里花费的时间
+    function drawAndAllocationSpeed(data) {
+        //轨迹坐标集合
+        var trackPoint = [];
+        //上一次的时间
+        var last_date = null;
+        //上一次的坐标
+        var last_point;
+        //距离累计值
+        var distance = 0;
+        //每1公里的起始索引，用以查找时间
+        var start_index = 0;
+        //描点和配速
+        var max_index = data.length - 1;
+        $.each(data,function(index,value){
+            if(last_date != null && isGreater(value.gpsDate,last_date)) {
+                draw(trackPoint);
+                trackPoint = [];
+            }else if(index === max_index) {
+                draw(trackPoint);
+            }
+            //一公里
+            if(distance >= 1000 || index === max_index) {
+                var t = 0;
+                if(index === max_index) {
+                    t = diff(data[start_index].gpsDate,value.gpsDate);
+                } else {
+                    t = diff(data[start_index].gpsDate,last_date)
+                }
+                var sa = {distance:distance, time:t};
+                speed_allocation.push(sa);
+                distance = 0;
+                start_index = index;
+            }
+            var point = new google.maps.LatLng(value.latitude,value.longitude);
+            if(last_point !== undefined) {
+                var d = getDistance(last_point,point);
+                distance+=d;
+            }
+            //过滤无效的点
+            if(filterInvalid(last_point,point)) {
+                trackPoint.push(point);
+                last_point = point;
+                last_date = value.gpsDate;
+            }
+        });
+        initTab();
+    }
+
+    function draw(trackPoints) {
+        var trackPath = new google.maps.Polyline({
+            path: trackPoints,
+            strokeColor: "#1869AD", // 线条颜色
+            strokeOpacity: 1.0, // 线条透明度
+            strokeWeight: 4 // 线条粗细
+        });
+        trackPath.setMap(map);
+    }
+
+    function isGreater(date1,date2) {
+        var d1 = new Date(Date.parse(date1.replace(/\./g,"/")));
+        var d2 = new Date(Date.parse(date2.replace(/\./g,"/")));
+        return (d2.getTime() - d1.getTime()) >= 60000 || (d2.getTime() - d1.getTime()) <= -60000;
+    }
+
+    function diff(date1,date2) {
+        var d1 = new Date(Date.parse(date1.replace(/\./g,"/")));
+        var d2 = new Date(Date.parse(date2.replace(/\./g,"/")));
+        return d2.getTime() - d1.getTime();
+    }
+
+    function getDistance(p1,p2) {
+        return google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+    }
+
+    function filterInvalid(last_point,point) {
+        if(last_point === undefined) {
+            return true;
+        }
+        //两个点之前的距离>2m && 距离小于100m || 两个点之间的速度<50m/s
+        var d = getDistance(last_point,point);
+        return d>=2 && d<=100;
+    }
+
+    function initTab() {
+        var y_data = [];
+        var value_data = [];
+        var maxValue = 0;
+        var make_point_array = [];
+
+        var count_distance=0;
+
+        speed_allocation = speed_allocation.reverse();
+        var j = speed_allocation.length;
+        $.each(speed_allocation,function(index,value){
+            y_data.push(j);
+            j--;
+            count_distance+=value.distance;
+            var time = value.time;
+            if(time > maxValue) {
+                maxValue = time;
+            }
+            var t = (parseInt((time % (1000 * 60 * 60)) / (1000 * 60))) + '\'' + (time%60000/1000) + '"';
+            if(value.distance < 1000) {
+                var t1 = 1000/value.distance*time;
+                t = (parseInt((t1 % (1000 * 60 * 60)) / (1000 * 60))) + '\'' + (parseInt((t1%60000/1000))) + '"';
+                t = '不足一公里用时: '+t;
+            }
+            var mpa = {value:t,xAxis:time,yAxis:index};
+            make_point_array.push(mpa);
+            value_data.push(time);
+        });
+
+
+        var canvas = echarts.init(document.getElementById('canvas'));
+        option = {
+            // title: [{
+            //     text: '在线构建',
+            //     subtext: '总计 10032',
+            //     x: '25%',
+            //     textAlign: 'center'
+            // }],
+            barWidth:20,
+            grid: [{
+                top: 30,
+                width: '50%',
+                bottom: '45%',
+                height:'50%',
+                left: 10,
+                containLabel: true
+            }],
+            xAxis: [{
+                type: 'value',
+                max: maxValue,
+                show:false,
+                splitLine: {
+                    show: false
+                }
+            }],
+            yAxis: [{
+                type: 'category',
+                data: y_data
+
+            }],
+            series: [{
+                type: 'bar',
+                stack: 'chart',
+                z: 3,
+                data: value_data,
+                markPoint : {
+                    data : make_point_array,
+                    symbol:'circle',
+                    itemStyle:{
+                        normal:{
+                            color:'rgba(256, 256, 256,0)'
+                        }
+                    },
+                    label:{
+                        normal:{
+                            color:'#000',
+                            position:'right',
+                            distance:5
+                        }
+                    }
+                }
+            }]
+        };
+        canvas.setOption(option);
+    }
+
+</script>
+</body>
+</html>
