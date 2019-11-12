@@ -82,7 +82,7 @@ public class DataController {
      * Web query GPS data
      * @param uid   User id
      * @param mac    MAC Address
-     * @param time
+     * @param time  查询的时间
      * @return
      * @throws Exception
      */
