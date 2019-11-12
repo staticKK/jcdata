@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <link rel="Bookmark" th:href="@{/favicon.ico}" >
+    <link rel="Shortcut Icon" th:href="@{/favicon.ico}"/>
+    <link rel="stylesheet" th:href="@{/lib/layui/css/layui.css}" media="all">
+    <title>Show Data</title>
+
+</head>
+<body>
+
+
+<br/>
+<br/>
+
+<div style="width: 1200px;height: 500px;margin: 0 auto;padding: 0 auto;">
+    <div id="ecg" style="width: 900px;height:400px;"></div>
+</div>
+
+
+<script th:src="@{/lib/jquery/jquery-1.11.1.min.js}"></script>
+<script th:src="@{/lib/layui/layui.js}"></script>
+<script th:src="@{/lib/common.js}"></script>
+<script th:src="@{/lib/echarts3.4.0/echarts.min.js}"></script>
+<script th:src="@{/lib/shine.js}"></script>
+<script type="text/javascript">
+
+    var show;
+    var real_ecg_data = [];
+    var xVal = 1200;
+    var ecg_data = [];
+    var x_data = [];
+    var x_data_value = xVal;
+
+    var ecg_index = 0;
+    var ecgh_newData = 0;
+
+    var ecgChart  = echarts.init(document.getElementById('ecg'));
+
+    $(function(){
+       var time = $.getUrlParam('t');
+       var uid = $.getUrlParam('uid');
+       var mac = $.getUrlParam('mac');
+        showEcg(time,uid,mac);
+    });
+
+    function showEcg(time,uid,mac) {
+        $.ajaxFormGet('/jcdata/data/queryEcg',{uid:uid,mac:mac,time:time},function(data){
+            if(data.msgCode === 1) {
+                real_ecg_data = data.data;
+                ecgChart.setOption(ecg_option);
+
+                setInterval(function(){
+                    if(ecg_data.length === xVal) {
+                        ecg_data.splice(0, 1);
+                        x_data.splice(0, 1);
+                        x_data_value++;
+                        x_data.push(x_data_value);
+                    }
+                    ecgh_newData = real_ecg_data[ecg_index];
+                    ecg_data.push(ecgh_newData);
+                    ecg_index++;
+                    if(ecg_index === real_ecg_data.length) {
+                        clearInterval(show);
+                        return;
+                    } else {
+                        ecgChart.setOption({
+                            xAxis:{
+                                data:x_data
+                            },
+                            series:[{
+                                data:ecg_data
+                            }]
+                        });
+                    }
+                },1);
+            }
+        });
+    }
+
+    for(var i = 0; i < xVal;i++) {
+        x_data.push(i);
+    }
+
+    var ecg_option = {
+        xAxis: {
+            type: 'category',
+            data: x_data,
+            show: false
+        },
+        yAxis: {
+            type: 'value',
+            show:false,
+            min: -1.5,
+            max: 1.5,
+            axisLabel :{
+                interval:0.0002
+            }
+        },
+        series: [{
+            type: 'line',
+            smooth: true,
+            markLine: {
+                data: [
+                    {yAxis: -1.5},
+                    {yAxis: -1.2},
+                    {yAxis: -0.9},
+                    {yAxis: -0.6},
+                    {yAxis: -0.3},
+                    {yAxis: 0},
+                    {yAxis: 0.3},
+                    {yAxis: 0.6},
+                    {yAxis: 0.9},
+                    {yAxis: 1.2},
+                    {yAxis: 1.5},
+
+                    {xAxis:260},
+                    {xAxis:520},
+                    {xAxis:780},
+                    {xAxis:1040},
+                    {xAxis:1300},
+                    {xAxis:1560}
+                ],
+                animation:false,
+                symbolSize:[0,0],
+                label:{show:false},
+                lineStyle:{
+                    normal:{
+                        color:'rgba(128, 128, 128,0.5)'
+                    }
+                }
+            },
+            showSymbol: false,
+            hoverAnimation: false
+        }]
+    };
+</script>
+</body>
+</html>

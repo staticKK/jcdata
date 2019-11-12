@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jointcorp.jcdata.mapper.GpsAllMapper">
+
+	<select id="selectFile" resultType="com.jointcorp.jcdata.po.DataGpsFilePO">
+		SELECT file_name as fileName,conver_file_name as converFileName,region,uid,mac,time FROM gps_data  WHERE uid=#{uid} AND mac=#{mac}
+	</select>
+
+</mapper>

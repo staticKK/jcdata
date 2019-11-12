@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <link rel="Bookmark" th:href="@{/favicon.ico}" >
+    <link rel="Shortcut Icon" th:href="@{/favicon.ico}"/>
+    <link rel="stylesheet" th:href="@{/lib/layui/css/layui.css}" media="all">
+    <title>Show Data</title>
+
+    <style>
+        .totalSportBox div{
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<br/>
+<br/>
+<div style="margin-top: 30px;margin-left: 70px;margin-bottom: 30px;">
+    <a class="layui-btn layui-btn-normal" href="gps.html">Go to view GPS data</a>
+    <a class="layui-btn layui-btn-normal" href="index.html">Go to view other data</a>
+</div>
+
+<div class="layui-form">
+    <div class="layui-form-item">
+
+        <div class="layui-inline">
+            <label class="layui-form-label">user</label>
+            <div class="layui-input-inline">
+                <select id="uid-select"  lay-filter="uidselectfilt">
+                    <option value="0">Place Select</option>
+
+                    <option th:each="user:${users}" th:value="${user.uid}" th:text="${user.nikeName}"></option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">MAC</label>
+            <div class="layui-input-inline">
+                <select id="mac-select">
+                    <option value="0">Place Select</option>
+                </select>
+            </div>
+
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">date</label>
+            <div class="layui-input-inline">
+                <input type="text" name="startDate" id="startDate" class="layui-input" readonly>
+            </div>
+        </div>
+        <button class="layui-btn" onclick="queryData()">query</button>
+    </div>
+</div>
+
+
+<div class="tableBox">
+    <table class="layui-table">
+        <thead>
+            <tr>
+                <td>hrv</td><td>Vascular aging</td><td>HeartData</td><td>Stress</td><td>DBP</td><td>SBP </td><td>time</td><td>query</td>
+            </tr>
+        </thead>
+        <tbody id="dataTbody">
+        </tbody>
+    </table>
+</div>
+
+
+<script th:src="@{/lib/jquery/jquery-1.11.1.min.js}"></script>
+<script th:src="@{/lib/layui/layui.js}"></script>
+<script th:src="@{/lib/common.js}"></script>
+<script type="text/javascript">
+
+    layui.use(['form',  'laydate'], function(){
+        var laydate = layui.laydate;
+        var form = layui.form;
+        laydate.render({
+            elem: '#startDate',
+            value: '2019-06-27',
+            type: 'date',
+            lang: 'en'
+        });
+        form.on('select(uidselectfilt)', function(data){
+            var uid = data.value;
+            $.ajaxFormGet('/jcdata/userInfo/queryMacByUid',{uid:uid},function(data){
+                var str = '';
+
+                $.each(data.data,function(index,value){
+                    str += '<option value='+value+'>'+value+'</option>'
+                });
+                $('#mac-select').html(str);
+                form.render();
+            });
+        });
+    });
+
+    function showLayer() {
+        layer.open({
+            type: 2,
+            title: false,
+            closeBtn: 1,
+            offset: 'b', //右下角弹出
+            area: ['99%', '580px'],
+            anim: 2,
+            content: ['ecgdata.html?t=', 'no'], //iframe的url，no代表不显示滚动条
+        });
+    }
+
+    var uid;
+    var mac;
+    function queryData() {
+        var day = $('#startDate').val();
+        uid = $('#uid-select option:selected').val();
+        mac = $('#mac-select option:selected').val();
+        var dataType = 'hrvData';
+        var arr = day.split('-');
+        $.ajaxFormGet('/jcdata/data/query',{uid:uid,mac:mac,year:arr[0],month:arr[1],day:arr[2],dataType:dataType},function(data){
+            if(uid === 0 || mac === '0') {
+                alert('Place Select');
+                return ;
+            }
+            if(data.msgCode == 1) {
+                var str = '';
+                $.each(data.data,function(i,value){
+                    var t = value.time;
+                    str += '<tr><td>'+value.hrv+'</td><td>'+value.degree+'</td><td>'+value.heartRate+'</td>' +
+                        '<td>'+value.pressure+'</td><td>'+value.diastolic+'</td><td>'+value.systolic+'</td>' +
+                        '<td>'+value.time+'</td><td><button class="layui-btn" onclick=\'showEcg("'+t+'")\'>query</button></td></tr>';
+                });
+                $('#dataTbody').html(str);
+            }
+        });
+    }
+
+    function showEcg(time) {
+        layer.open({
+            type: 2,
+            title: false,
+            closeBtn: 1,
+            offset: 'b', //右下角弹出
+            area: ['99%', '580px'],
+            anim: 2,
+            content: ['ecgdata.html?t='+time+'&uid='+uid+'&mac='+mac, 'no'], //iframe的url，no代表不显示滚动条
+        });
+    }
+</script>
+</body>
+</html>

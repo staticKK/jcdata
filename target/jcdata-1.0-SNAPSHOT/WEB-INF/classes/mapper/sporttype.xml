@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jointcorp.jcdata.mapper.GpsMapper">
+
+	<select id="selectExistFile" parameterType="java.util.List" resultType="com.jointcorp.jcdata.po.ExistGpsFilePO">
+		SELECT id,time,file_name as fileName,conver_file_name as converFileName,region  from gps_data
+		WHERE uid = #{uid} and mac = #{mac}
+		and time between #{minDate} and #{maxDate}
+		and time IN
+		<foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+	</select>
+
+	<update id="batchUpdatetFile" parameterType="java.util.List">
+		<foreach collection="list" item="item" index="index" open="" close="" separator=";">
+			update gps_data
+			<set>
+				file_name = '${item.fileName}',region = '${item.region}'
+			</set>
+			where uid = ${item.uid} and mac = '${item.mac}' and time = '${item.time}'
+		</foreach>
+	</update>
+
+	<update id="batchUpdatetConverFile" parameterType="java.util.List">
+		<foreach collection="list" item="item" index="index" open="" close="" separator=";">
+			update gps_data
+			<set>
+				conver_file_name = '${item.converFileName}'
+			</set>
+			where uid = ${item.uid} and mac = '${item.mac}' and time = '${item.time}'
+		</foreach>
+	</update>
+
+	<insert id="batchInsertFile" useGeneratedKeys="true" parameterType="java.util.List">
+		insert into gps_data(file_name,region,uid,mac,time)  values
+		<foreach collection="list" item="item" index="index" separator="," >
+			(#{item.fileName},#{item.region},#{item.uid},#{item.mac},DATE_FORMAT(#{item.time},'%Y-%m-%d %H:%i:%s'))
+		</foreach>
+	</insert>
+
+	<select id="selectFile" resultType="com.jointcorp.jcdata.po.DataGpsFilePO">
+		SELECT file_name as fileName,conver_file_name as converFileName,region,uid,mac,time FROM gps_data  WHERE uid=#{uid} AND mac=#{mac} AND time = '${time}'
+	</select>
+
+</mapper>
