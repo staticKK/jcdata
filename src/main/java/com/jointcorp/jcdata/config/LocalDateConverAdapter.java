@@ -11,10 +11,13 @@ import java.time.format.DateTimeFormatter;
 public class LocalDateConverAdapter {
 
     @Bean
-    public Converter<String, LocalDate> DateConvert() {
+    public Converter<String, LocalDate> dateConvert() {
         return new Converter<String, LocalDate>() {
             @Override
             public LocalDate convert(String source) {
+                if(source.contains(".")) {
+                    return LocalDate.parse(source, DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+                }
                 return LocalDate.parse(source, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             }
         };

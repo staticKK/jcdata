@@ -75,24 +75,31 @@ public class DataServiceImpl implements DataService {
             return MsgInterpreter.success();
         }
 
+//        if(dataType.equals(DataType.TOTAL_SPORT_DATA.getDataType())) {
+//            //总运动数据
+//            List<TotalSportDataPO> listPO1 = new ArrayList<>(totals.size());
+//            List<LocalDate> dates = new ArrayList<>(totals.size());
+//            totals.forEach(total -> {
+//                dates.add(DateUtil.parseDate(total.getTime()));
+//                listPO1.add(TotalSportDataPO.parse(total,data.getMac(),data.getUid()));
+//            });
+//            totalSportData(listPO1,dates,data.getMac(),data.getUid());
+//            if(StringUtils.isNotBlank(data.getDeviceType())) {
+//                saveDeviceType(data.getMac(),data.getUid(),data.getDeviceType());
+//            }
+//
+//            return MsgInterpreter.success();
+//        }
         if(dataType.equals(DataType.TOTAL_SPORT_DATA.getDataType())) {
-            //总运动数据
-            List<TotalSportDataPO> listPO1 = new ArrayList<>(totals.size());
-            List<LocalDate> dates = new ArrayList<>(totals.size());
-            totals.forEach(total -> {
-                dates.add(DateUtil.parseDate(total.getTime()));
-                listPO1.add(TotalSportDataPO.parse(total,data.getMac(),data.getUid()));
-            });
-            totalSportData(listPO1,dates,data.getMac(),data.getUid());
-            if(StringUtils.isNotBlank(data.getDeviceType())) {
-                saveDeviceType(data.getMac(),data.getUid(),data.getDeviceType());
-            }
-
+            saveDeviceType(totals,data.getMac(),data.getUid(),data.getDeviceType());
             return MsgInterpreter.success();
         }
+
+
         List<DataTotalPO> listPO = new ArrayList<>(totals.size());
         List<LocalDateTime> localDateTimes = new ArrayList<>(totals.size());
 
+        totals.removeIf(total -> total == null || CollectionUtils.isEmpty(total.getDataDetail()));
         totals.forEach(total ->{
             localDateTimes.add(DateUtil.parseDataTime(total.getTime()));
             listPO.add(DataTotalPO.parse(total,data.getMac(),data.getUid()));
@@ -125,7 +132,15 @@ public class DataServiceImpl implements DataService {
         return MsgInterpreter.success();
     }
 
-    private void saveDeviceType(String mac, Long uid, String deviceType) throws Exception {
+    private void saveDeviceType(List<DataTotal> totals,String mac, Long uid, String deviceType) throws Exception {
+        //总运动数据
+        List<TotalSportDataPO> listPO1 = new ArrayList<>(totals.size());
+        List<LocalDate> dates = new ArrayList<>(totals.size());
+        totals.forEach(total -> {
+            dates.add(DateUtil.parseDate(total.getTime()));
+            listPO1.add(TotalSportDataPO.parse(total,mac,uid));
+        });
+        totalSportData(listPO1,dates,mac,uid);
         jcdataMapper.insertLastUseDevice(uid,mac,deviceType,LocalDateTime.now());
     }
 

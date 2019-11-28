@@ -1,0 +1,27 @@
+
+1.睡眠详情
+{"dataTotal":[{"dataDetail":["7","9","9","9","9","7","7","95","8","11","15","68","15","125","10","16","15","23","30","8","41","97","7","17"],"time":"2019.07.18 01:04:59"}],
+"dataType":"detailSleepData","mac":"E3:40:DA:EC:36:1C","uid":109881,"deviceType":"1755"}
+
+这是上传的一段睡眠详情数据，除了用户id、设备mac地址、设备型号之外，
+最重要的就是
+time:表示这段睡眠的开始时间，本次睡眠开始时间是2019.07.18 01:04:59
+dataDetail:睡眠详细数据
+
+分析dataDetail数据：
+["7","9","9","9","9","7","7","95","8","11","15","68","15","125","10","16","15","23","30","8","41","97","7","17"]
+其中每个数据表示这5分钟的睡眠情况，数据中第0位'7'就表示从01:04:59到01::09:59秒的睡眠状态，数组中一共有24个数据，表示120分钟的睡眠情况。
+
+
+
+1.Sleep details
+{"dataTotal":[{"dataDetail":["7","9","9","9","9","7","7","95","8","11","15","68","15","125","10","16","15","23","30","8","41","97","7","17"],"time":"2019.07.18 01:04:59"}],
+"dataType":"detailSleepData","mac":"E3:40:DA:EC:36:1C","uid":109881,"deviceType":"1755"}
+This is a piece of sleep details data uploaded, except for user id, device mac address, device model,
+The most important thing is
+Time: indicates the start time of this sleep. The start time of this sleep is 2011.07.18 01:04:59
+dataDetail: sleep details
+
+Analyze the dataDetail data:
+Each of these data represents the 5-minute sleep situation. The 0th digit '7' in the data indicates the sleep state from 01:04:59 to 01::09:59 seconds.
+There are 24 data in the array, indicating 120. Minutes of sleep.

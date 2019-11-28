@@ -15,6 +15,7 @@ import com.jointcorp.jcdata.service.AppDataQueryService;
 import com.jointcorp.jcdata.utils.DateUtil;
 import com.jointcorp.jcdata.vo.Data;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -69,7 +70,7 @@ public class AppDataServiceImpl implements AppDataQueryService {
     @Override
     public MessageResult queryDeviceType(long uid) throws Exception {
         DeviceAndMac deviceAndMac = jcdataMapper.selecDeviceType(uid);
-        if(deviceAndMac == null) {
+        if(deviceAndMac == null || StringUtils.isBlank(deviceAndMac.getDeviceType())) {
             String mac = jcdataMapper.selectLastMac(uid);
             deviceAndMac = new DeviceAndMac(mac,"1755");
             return MsgInterpreter.success(deviceAndMac);
