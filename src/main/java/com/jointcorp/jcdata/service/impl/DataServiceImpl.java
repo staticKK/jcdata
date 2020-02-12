@@ -61,7 +61,7 @@ public class DataServiceImpl implements DataService {
         if(dataType.equals(DataType.TOTAL_SPORT_DATA.getDataType())) {
             data.getDataTotal().removeIf(dataTotal -> !DateTimeUtil.matcherYmd(dataTotal.getTime()));
         } else {
-            data.getDataTotal().removeIf(dataTotal -> !DateTimeUtil.matcherYmdhms(dataTotal.getTime()));
+            data.getDataTotal().removeIf(dataTotal -> !DateTimeUtil.verify(dataTotal.getTime()));
         }
         if(CollectionUtils.isEmpty(data.getDataTotal())) {
             return MsgInterpreter.success();
